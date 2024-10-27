@@ -1,0 +1,49 @@
+{
+	"name": "@servicerental/backend",
+	"version": "1.2.0",
+	"description": "service rental backend",
+	"main": "src/Server/server.ts",
+	"scripts": {
+		"start": "ts-node src/Server/server.ts",
+		"dev": "nodemon src/Server/server.ts",
+		"build": "tsc",
+		"start:dist": "node dist/src/Server/server.js",
+		"lint": "eslint --fix src test",
+		"test": "jest",
+		"typecheck": "tsc --noEmit"
+	},
+	"keywords": [],
+	"author": "Resham Acharya",
+	"license": "",
+	"dependencies": {
+		"@prisma/client": "^5.21.1",
+		"appwrite": "^16.0.2",
+		"bcrypt": "^5.1.1",
+		"body-parser": "^1.20.3",
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"eslint-plugin-import-alias": "^1.2.0",
+		"express": "^4.21.1",
+		"helmet": "^8.0.0",
+		"jsonwebtoken": "^9.0.2",
+		"morgan": "^1.10.0",
+		"nodemon": "^3.1.7",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.13.0",
+		"@types/cookie-parser": "^1.4.7",
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.0",
+		"@types/morgan": "^1.9.9",
+		"@types/node": "^22.8.1",
+		"eslint": "^9.13.0",
+		"globals": "^15.11.0",
+		"prisma": "^5.21.1",
+		"ts-node": "^10.9.2",
+		"tsconfig-paths": "^4.2.0",
+		"typescript": "^5.6.3",
+		"typescript-eslint": "^8.11.0"
+	}
+}
