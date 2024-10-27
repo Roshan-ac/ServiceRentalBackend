@@ -115,3 +115,15 @@ model SkillSet {
   freelancerId String?     @unique()
   freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
 }
+
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       String   @db.VarChar(6)
+  sessionId String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([email, createdAt])
+}
