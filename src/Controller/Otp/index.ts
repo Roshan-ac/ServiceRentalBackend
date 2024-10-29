@@ -1,33 +1,36 @@
 // Utility function to generate unique session ID
-import { asyncHandler } from "@src/Middleware/asyncHandler";
-import { ApiError } from "@src/utils/ApiError";
+
 import { EmailVerification } from "@src/utils/emailOtpMailer";
-import { prisma } from "@src/utils/prisma";
+// Verify OTP controller
+import { Request, Response, NextFunction } from "express";
+import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
-import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
+import { ApiError } from "@src/utils/ApiError";
+import { generateToken } from "@src/utils/jwt";
+import { asyncHandler } from "@src/Middleware/asyncHandler";
 
 const generateSessionId = (): string => {
   return crypto.randomBytes(32).toString("hex");
 };
 
 const OtpSchema = z.object({
-    email: z
-      .string({
-        required_error: "Email is required",
-      })
-      .refine((email) => {
-        const validDomains = [
-          "gmail.com",
-          "yahoo.com",
-          "hotmail.com",
-          "outlook.com",
-        ];
-        const domain = email.split("@")[1];
-        return validDomains.includes(domain);
-      }, "Email domain not allowed. Use gmail.com, yahoo.com, hotmail.com, or outlook.com"),
-  });
+  email: z
+    .string({
+      required_error: "Email is required",
+    })
+    .refine((email) => {
+      const validDomains = [
+        "gmail.com",
+        "yahoo.com",
+        "hotmail.com",
+        "outlook.com",
+      ];
+      const domain = email.split("@")[1];
+      return validDomains.includes(domain);
+    }, "Email domain not allowed. Use gmail.com, yahoo.com, hotmail.com, or outlook.com"),
+});
 
 // Utility function to generate OTP
 const generateOTP = (): string => {
@@ -45,7 +48,7 @@ const cleanupOTPs = async () => {
       },
     });
   } catch (error) {
-    console.error("OTP Cleanup Error:", error);
+    throw new ApiError(500, "Failed to clean up expired OTPs");
   }
 };
 
@@ -55,7 +58,6 @@ export const sendOTPController = async (
   res: Response,
   next: NextFunction
 ) => {
-
   const validatedData = OtpSchema.parse(req.body);
 
   if (!validatedData.email) {
@@ -72,7 +74,7 @@ export const sendOTPController = async (
     // Delete any existing unused OTPs for this email
     await prisma.otp.deleteMany({
       where: {
-        email:validatedData.email,
+        email: validatedData.email,
       },
     });
 
@@ -87,7 +89,7 @@ export const sendOTPController = async (
     // Create new OTP record with session ID
     await prisma.otp.create({
       data: {
-        email:validatedData.email,
+        email: validatedData.email,
         otp,
         sessionId,
         expiresAt,
@@ -104,28 +106,101 @@ export const sendOTPController = async (
       message: "OTP sent successfully",
     });
   } catch (error) {
-    console.error("OTP Generation Error:", error);
     throw new ApiError(500, "Failed to send OTP");
   }
 };
 
-// Verify OTP controller
+const prisma = new PrismaClient();
+
+interface VerifyOTPBody {
+  email: string;
+  otp: string;
+  sessionId: string;
+}
+
+const createSession = async (
+  userId: string,
+  email: string,
+  role: "Customer" | "Freelancer"
+) => {
+  const token = generateToken({ email, role });
+
+  const sessionData = {
+    token,
+    expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 day
+  };
+ 
+  return await prisma.session.update({
+    data: sessionData,
+    where: {
+      ...(role === "Customer"
+        ? { customerId: userId }
+        : { freelancerId: userId }),
+    },
+    select: {
+      token: true,
+      expireDate: true,
+    },
+  });
+};
+
+const findUser = async (email: string) => {
+  const customer = await prisma.customer.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      middleName: true,
+      session: true,
+    },
+  });
+
+  if (customer) {
+    return { user: customer, role: "Customer" as const };
+  }
+
+  const freelancer = await prisma.freelancer.findFirst({
+    where: { email },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      middleName: true,
+      session: true,
+    },
+  });
+
+  if (freelancer) {
+    return { user: freelancer, role: "Freelancer" as const };
+  }
+
+  return null;
+};
+
 export const verifyOTPController = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+    req: Request<{}, {}, VerifyOTPBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
     const { email, otp, sessionId } = req.body;
 
+    // Validate required fields
     if (!email || !otp || !sessionId) {
       throw new ApiError(400, "Email, OTP, and session ID are required");
     }
 
+    // Validate email format
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
     if (!isEmailValid) {
       throw new ApiError(400, "Invalid email address");
     }
 
     try {
-      // Find the OTP record matching both session ID and email
+      // Verify OTP
       const otpRecord = await prisma.otp.findFirst({
         where: {
           email,
@@ -139,11 +214,27 @@ export const verifyOTPController = asyncHandler(
         throw new ApiError(400, "Invalid or expired OTP");
       }
 
-      // Clean up old OTPs
+      // Clean up expired OTPs
       await cleanupOTPs();
+
+      // Find existing user
+      const userInfo = await findUser(email);
+
+      if (!userInfo) {
+        return res.status(200).json({
+          success: true,
+          isRegistered: false,
+          message: "OTP verified successfully",
+        });
+      }
+
+
+      await createSession(userInfo.user.id, email, userInfo.role);
 
       return res.status(200).json({
         success: true,
+        isRegistered: true,
+        ...(await findUser(email)),
         message: "OTP verified successfully",
       });
     } catch (error) {
@@ -154,7 +245,6 @@ export const verifyOTPController = asyncHandler(
     }
   }
 );
-
 // Rate limiter middleware
 export const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
