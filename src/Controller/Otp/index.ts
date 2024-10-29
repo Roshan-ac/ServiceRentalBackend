@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 // Utility function to generate unique session ID
 
+=======
+import { asyncHandler } from "@src/Middleware/asyncHandler";
+import { ApiError } from "@src/utils/ApiError";
+>>>>>>> 39a7867 (updated on server)
 import { EmailVerification } from "@src/utils/emailOtpMailer";
 // Verify OTP controller
 import { Request, Response, NextFunction } from "express";
@@ -11,15 +16,21 @@ import { ApiError } from "@src/utils/ApiError";
 import { generateToken } from "@src/utils/jwt";
 import { asyncHandler } from "@src/Middleware/asyncHandler";
 
+// Utility function to generate unique session ID
 const generateSessionId = (): string => {
   return crypto.randomBytes(32).toString("hex");
 };
 
+// Improved OTP schema with email validation
 const OtpSchema = z.object({
   email: z
     .string({
       required_error: "Email is required",
     })
+<<<<<<< HEAD
+=======
+    .email("Invalid email format")
+>>>>>>> 39a7867 (updated on server)
     .refine((email) => {
       const validDomains = [
         "gmail.com",
@@ -32,11 +43,20 @@ const OtpSchema = z.object({
     }, "Email domain not allowed. Use gmail.com, yahoo.com, hotmail.com, or outlook.com"),
 });
 
-// Utility function to generate OTP
+// Improved OTP verification schema
+const VerifyOtpSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  otp: z.string().length(6, "OTP must be exactly 6 digits").regex(/^\d{6}$/, "OTP must contain only digits"),
+  sessionId: z.string().min(1, "Session ID is required"),
+});
+
+// Improved OTP generation function with guaranteed 6 digits
 const generateOTP = (): string => {
-  return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join(
-    ""
-  );
+  // Generate a random number between 100000 and 999999 (inclusive)
+  const min = 100000;
+  const max = 999999;
+  const otp = Math.floor(Math.random() * (max - min + 1)) + min;
+  return otp.toString();
 };
 
 // Cleanup function for expired/used OTPs
@@ -52,6 +72,7 @@ const cleanupOTPs = async () => {
   }
 };
 
+<<<<<<< HEAD
 // Send OTP controller
 export const sendOTPController = async (
   req: Request,
@@ -59,17 +80,40 @@ export const sendOTPController = async (
   next: NextFunction
 ) => {
   const validatedData = OtpSchema.parse(req.body);
+=======
+// Send OTP controller with improved validation
+export const sendOTPController = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const validatedData = OtpSchema.parse(req.body);
 
-  if (!validatedData.email) {
-    throw new ApiError(400, "Email is required");
-  }
+    try {
+      // Delete any existing unused OTPs for this email
+      await prisma.otp.deleteMany({
+        where: {
+          email: validatedData.email,
+        },
+      });
+>>>>>>> 39a7867 (updated on server)
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(validatedData.email);
+      // Generate new OTP and session ID
+      const otp = generateOTP();
+      const sessionId = generateSessionId();
 
-  if (!isEmailValid) {
-    throw new ApiError(400, "Invalid email address");
-  }
+      // Calculate expiry (10 minutes from now)
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
+      // Create new OTP record with session ID
+      await prisma.otp.create({
+        data: {
+          email: validatedData.email,
+          otp,
+          sessionId,
+          expiresAt,
+        },
+      });
+
+<<<<<<< HEAD
   try {
     // Delete any existing unused OTPs for this email
     await prisma.otp.deleteMany({
@@ -107,9 +151,25 @@ export const sendOTPController = async (
     });
   } catch (error) {
     throw new ApiError(500, "Failed to send OTP");
-  }
-};
+=======
+      // Send email with OTP
+      await EmailVerification(validatedData.email, Number(otp));
 
+      // Return only the session ID to the client
+      res.status(200).json({
+        success: true,
+        sessionId,
+        message: "OTP sent successfully",
+      });
+    } catch (error) {
+      console.error("OTP Generation Error:", error);
+      throw new ApiError(500, "Failed to send OTP");
+    }
+>>>>>>> 39a7867 (updated on server)
+  }
+);
+
+<<<<<<< HEAD
 const prisma = new PrismaClient();
 
 interface VerifyOTPBody {
@@ -198,14 +258,20 @@ export const verifyOTPController = asyncHandler(
     if (!isEmailValid) {
       throw new ApiError(400, "Invalid email address");
     }
+=======
+// Verify OTP controller with improved validation
+export const verifyOTPController = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const validatedData = VerifyOtpSchema.parse(req.body);
+>>>>>>> 39a7867 (updated on server)
 
     try {
       // Verify OTP
       const otpRecord = await prisma.otp.findFirst({
         where: {
-          email,
-          otp,
-          sessionId,
+          email: validatedData.email,
+          otp: validatedData.otp,
+          sessionId: validatedData.sessionId,
           expiresAt: { gt: new Date() },
         },
       });
@@ -214,7 +280,18 @@ export const verifyOTPController = asyncHandler(
         throw new ApiError(400, "Invalid or expired OTP");
       }
 
+<<<<<<< HEAD
       // Clean up expired OTPs
+=======
+      // Delete the used OTP
+      await prisma.otp.delete({
+        where: {
+          id: otpRecord.id,
+        },
+      });
+
+      // Clean up other expired OTPs
+>>>>>>> 39a7867 (updated on server)
       await cleanupOTPs();
 
       // Find existing user
