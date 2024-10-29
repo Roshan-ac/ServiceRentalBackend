@@ -172,6 +172,7 @@ const findUser = async (email: string) => {
       id: true,
       firstName: true,
       lastName: true,
+      username: true,
       email: true,
       middleName: true,
       session: true,
@@ -187,6 +188,7 @@ const findUser = async (email: string) => {
     select: {
       id: true,
       firstName: true,
+      username: true,
       lastName: true,
       email: true,
       middleName: true,

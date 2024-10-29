@@ -115,6 +115,8 @@ export const register = async (req: Request, res: Response) => {
         }
       });
 
+      
+
       return res.status(201).json({
         success: true,
         message: "Customer registered successfully",
@@ -153,7 +155,7 @@ export const register = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: "Freelancer registered successfully",
-      data: { freelancer, updateSession },
+      data: { ...freelancer, updateSession },
     });
   } catch (error) {
     throw new ApiError(500, "Error creating user", [error]);
