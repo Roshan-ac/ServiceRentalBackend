@@ -1,41 +1,26 @@
-import { verifyToken } from '@src/utils/jwt';
-import { Request, Response, NextFunction } from 'express';
+import { verifyToken } from "@src/utils/jwt";
+import { Request, Response, NextFunction } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-// Extend the Request interface to include the user property
-declare module 'express' {
-  interface Request {
-    user?: JwtPayload;
-  }
-}
-import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
-
-// Use environment variable for secret key
-const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your-secret-key';
-
-/**
- * Middleware to authenticate and decode JWT token.
- */
-export const authorizeMe = (
-  req: Request,
+export const authorizeMe = async (
+  req: any,
   res: Response,
   next: NextFunction
-) => {
-  const authHeader = req.headers.authorization;
-
-  // Check if token is provided in the Authorization header
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Authorization token missing or invalid' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
+): Promise<void> => {
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Authorization token missing or invalid" });
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token) as JwtPayload;
 
-    // Attach decoded payload to the request object
-    req.user = decoded;
-    next(); // Proceed to the next middleware or route handler
+    req.user = decoded; // Attach the decoded token to the request
+    next(); // Proceed to the next middleware or handler
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    res.status(403).json({ message: "Invalid or expired token" });
   }
 };

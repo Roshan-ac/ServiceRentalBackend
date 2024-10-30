@@ -25,6 +25,7 @@ model Customer {
   contact    Contact? @relation("customerContact")
   session    Session?
   post       Post[]
+  Avatar     Avatar?
 }
 
 /// @@allow('create,read', true)
@@ -51,6 +52,8 @@ model Avatar {
   image        String
   freelancerId String?     @unique()
   freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  customerId   String?     @unique()
+  customer     Customer?   @relation(fields: [customerId], references: [id])
 }
 
 model Post {
@@ -115,7 +118,6 @@ model SkillSet {
   freelancerId String?     @unique()
   freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
 }
-
 
 model Otp {
   id        Int      @id @default(autoincrement())

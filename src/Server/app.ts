@@ -1,10 +1,10 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-// import compression from 'compression';
 import { errorHandler } from '../Middleware/errorHandler';
-import { CONFIG } from '../config';
 import authRoutes from '../Routes/Auth';
+import meRoutes from '../Routes/me';
+import path from 'path';
 
 const app: Application = express();
 
@@ -14,9 +14,11 @@ app.use(cors());
 // app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/public", express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/me', meRoutes);
 
 // Error handling (ensure this is after all other middleware and routes)
 app.use(errorHandler);
