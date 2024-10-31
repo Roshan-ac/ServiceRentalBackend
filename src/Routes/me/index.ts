@@ -16,5 +16,6 @@ router.post(
   uploadVendorDocument,
   asyncHandler(meController.editProfile)
 );
+router.get("/profile", authorizeMe, asyncHandler(meController.getProfile));
 
 export default router;
