@@ -14,7 +14,11 @@ app.use(cors());
 // app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/public', express.static(path.resolve('./public')));
+app.use('/public', express.static(path.resolve('./public'), {
+    setHeaders: (res) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  }));
 
 // Routes
 app.use('/api/auth', authRoutes);
