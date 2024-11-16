@@ -101,7 +101,11 @@ export const register = async (req: Request, res: Response) => {
         },
       });
 
-      const token = generateToken({ email: customer.email, role: "Customer" });
+      const token = generateToken({
+        email: customer.email,
+        id: customer.id,
+        role: "Customer",
+      });
 
       const updateSession = await prisma.session.create({
         data: {
@@ -109,13 +113,11 @@ export const register = async (req: Request, res: Response) => {
           token,
           expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
-        select:{
-          token:true,
-          expireDate:true
-        }
+        select: {
+          token: true,
+          expireDate: true,
+        },
       });
-
-      
 
       return res.status(201).json({
         success: true,
@@ -134,9 +136,9 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-
     const token = generateToken({
       email: freelancer.email,
+      id: freelancer.id,
       role: "Freelancer",
     });
 
@@ -146,10 +148,10 @@ export const register = async (req: Request, res: Response) => {
         token,
         expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
-      select:{
-        token:true,
-        expireDate:true
-      }
+      select: {
+        token: true,
+        expireDate: true,
+      },
     });
 
     return res.status(201).json({
