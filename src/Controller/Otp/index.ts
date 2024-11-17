@@ -144,8 +144,8 @@ const createSession = async (
   email: string,
   role: "Customer" | "Freelancer"
 ) => {
-  const token = generateToken({ email, role });
-  console.log(token);
+  const token = generateToken({id:userId, email, role });
+ 
 
   const sessionData = {
     token,
