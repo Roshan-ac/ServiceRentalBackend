@@ -89,7 +89,7 @@ class PostController {
         estimatedTime: parseInt(estimatedTime),
         paymentMode: paymentMethod as PaymentMode,
         ...(dailyRate && { dailyRate: dailyRate }),
-        ...(fixedRate && { hourlyRate: fixedRate }),
+        ...(fixedRate && { fixedRate: fixedRate }),
         requiredSkills: skills,
         customerId: req.user?.id ?? "",
         description,
