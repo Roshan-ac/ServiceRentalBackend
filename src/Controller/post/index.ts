@@ -55,11 +55,11 @@ const postSchemma = z.object({
 
 class PostController {
   public async addNewPost(req: Request, res: Response) {
-    console.log( await req.body);
-    console.log( "hello world");
+    console.log(await req.body);
+    console.log("hello world");
 
     if (typeof req.body === "string") {
-      req.body = JSON.parse( req.body);
+      req.body = JSON.parse(req.body);
     }
 
     const validatedData = postSchemma.parse(req.body);
@@ -79,8 +79,7 @@ class PostController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log("userId",req.user);
-
+    console.log("userId", req.user);
 
     // Save the post to the database
     const post = await prisma.post.create({
@@ -100,29 +99,32 @@ class PostController {
     return res.status(201).json({ message: "Post created successfully", post });
   }
 
-    public async getMyPosts(req: Request, res: Response) {
-        const role = req.user?.role;
-        if (!role || role !== "Customer") {
-        return res.status(401).json({ message: "Unauthorized" });
-        }
-    
-        const posts = await prisma.post.findMany({
-        where: { customerId: req.user?.id },
-        select:{
-            caption:true,
-            location:true,
-            estimatedTime:true,
-            paymentMode:true,
-            dailyRate:true,
-            fixedRate:true,
-            postedAt:true,
-            requiredSkills:true,
-            description:true,
-        }
-        });
-    
-        return res.status(200).json({ posts });
+  public async getMyPosts(req: Request, res: Response) {
+    const role = req.user?.role;
+    if (!role || role !== "Customer") {
+      return res.status(401).json({ message: "Unauthorized" });
     }
+
+    const posts = await prisma.post.findMany({
+      where: { customerId: req.user?.id },
+      orderBy: {
+        postedAt: "desc",
+      },
+      select: {
+        caption: true,
+        location: true,
+        estimatedTime: true,
+        paymentMode: true,
+        dailyRate: true,
+        fixedRate: true,
+        postedAt: true,
+        requiredSkills: true,
+        description: true,
+      },
+    });
+
+    return res.status(200).json({ posts });
+  }
 }
 
 export const postController = new PostController();
