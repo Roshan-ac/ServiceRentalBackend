@@ -81,7 +81,7 @@ class PostController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log("userId", req.user);
+    // console.log("userId", req.user);
 
     // Save the post to the database
     const post = await prisma.post.create({

@@ -11,37 +11,35 @@ datasource db {
 /// @@allow('create,read', true)
 /// @@allow('update,delete', auth() == this)
 model Customer {
-  id         String   @id @unique @default(uuid())
-  username   String   @unique
+  id         String    @id @unique @default(uuid())
+  username   String    @unique
   firstName  String
-  email      String   @unique
+  email      String    @unique
   middleName String?
   lastName   String
   Avatar     Avatar?
-  contact    Contact? @relation("customerContact")
-  post       Post?
-  session    Session?
+  contact    Contact?  @relation("customerContact")
+  post       Post[]
+  session    Session[]
 }
 
-/// @@allow('create,read', true)
-/// @@allow('update,delete', auth() == this)
 model Freelancer {
-  id             String          @id @unique @default(uuid())
-  username       String          @unique
+  id             String           @id @unique @default(uuid())
+  username       String           @unique
   firstName      String
-  email          String          @unique
+  email          String           @unique
   middleName     String?
   lastName       String
-  availibility   Boolean         @default(false)
+  availibility   Boolean          @default(false)
   description    String?
   hourlyRate     Float?
   dailyRate      Float?
   Avatar         Avatar?
-  contact        Contact?        @relation("FreelancerContact")
-  session        Session?
-  skills         SkillSet?
-  workExperience WorkExperience?
-  porposal       porposal?
+  contact        Contact?         @relation("FreelancerContact")
+  session        Session[]
+  skills         SkillSet[]
+  workExperience WorkExperience[]
+  porposal       porposal[]
 }
 
 model Avatar {
@@ -63,12 +61,20 @@ model Post {
   requiredSkills String[]
   location       String
   estimatedTime  Int
-  timeUnit       estimatedTimeUnit
+  customerId     String?           @unique
   dailyRate      Int?
   fixedRate      Int?
-  customerId     String?           @unique
+  timeUnit       estimatedTimeUnit
   customer       Customer?         @relation(fields: [customerId], references: [id])
-  porposal       porposal?
+  porposal       porposal[]
+}
+
+model porposal {
+  id           String     @id @unique @default(uuid())
+  postId       String     @unique
+  freelancerId String     @unique
+  freelancer   Freelancer @relation(fields: [freelancerId], references: [id])
+  post         Post       @relation(fields: [postId], references: [id])
 }
 
 model Session {
@@ -123,14 +129,6 @@ model Otp {
   expiresAt DateTime
 
   @@index([email, createdAt])
-}
-
-model porposal {
-  id           String     @id @unique
-  postId       String     @unique
-  freelancerId String     @unique
-  Freelancer   Freelancer @relation(fields: [freelancerId], references: [id])
-  Post         Post       @relation(fields: [postId], references: [id])
 }
 
 enum PaymentMode {
