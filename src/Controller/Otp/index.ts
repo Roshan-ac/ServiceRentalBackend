@@ -105,6 +105,8 @@ export const sendOTPController = async (
     const otp = generateOTP();
     const sessionId = generateSessionId();
 
+    console.log("otp", otp,sessionId);
+
     // Calculate expiry (10 minutes from now)
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
@@ -151,6 +153,31 @@ const createSession = async (
     token,
     expireDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 day
   };
+
+  const isSessionExist = await prisma.session.findFirst({
+    where: {
+      ...(role === "Customer"
+        ? { customerId: userId }
+        : { freelancerId: userId }),
+    },
+  });
+
+  if (!isSessionExist) {
+    return await prisma.session.create({
+      data: {
+        ...(role === "Customer"
+          ? { customerId: userId }
+          : { freelancerId: userId }),
+        ...sessionData,
+      },
+      select: {
+        token: true,
+        expireDate: true,
+      },
+    });
+  }
+
+
 
   return await prisma.session.update({
     data: sessionData,
@@ -226,6 +253,7 @@ export const verifyOTPController = asyncHandler(
 
     try {
       // Verify OTP
+      console.log("validatedData", validatedData);
       const otpRecord = await prisma.otp.findFirst({
         where: {
           email: validatedData.email,
@@ -262,6 +290,7 @@ export const verifyOTPController = asyncHandler(
         message: "OTP verified successfully",
       });
     } catch (error) {
+      console.log("error", error);
       if (error instanceof ApiError) {
         throw error;
       }
