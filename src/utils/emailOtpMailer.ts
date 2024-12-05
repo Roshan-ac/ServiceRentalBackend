@@ -10,6 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
 export async function EmailVerification(
   email: string,
   verificationCode: number
@@ -144,6 +145,7 @@ export async function EmailVerification(
       subject: "Otp Verification Code",
       text: `${verificationCode} is your Rental Service Otp Verification Code.`,
       html: htmlTemplate,
+      
     });
     console.log("Message sent: %s", info.messageId);
   } catch (error) {

@@ -19,7 +19,7 @@ model Customer {
   lastName   String
   Avatar     Avatar?
   contact    Contact? @relation("customerContact")
-  post       Post[]
+  post       Post?
   session    Session?
 }
 
@@ -35,11 +35,13 @@ model Freelancer {
   availibility   Boolean         @default(false)
   description    String?
   hourlyRate     Float?
+  dailyRate      Float?
   Avatar         Avatar?
   contact        Contact?        @relation("FreelancerContact")
   session        Session?
   skills         SkillSet?
   workExperience WorkExperience?
+  porposal       porposal?
 }
 
 model Avatar {
@@ -52,19 +54,21 @@ model Avatar {
 }
 
 model Post {
-  id             String      @id @unique @default(uuid())
+  id             String            @id @unique @default(uuid())
   image          String?
   caption        String
   description    String
-  postedAt       DateTime    @default(now())
-  location       String
-  customerId     String
-  dailyRate      Int?
-  estimatedTime  Int
-  fixedRate      Int?
+  postedAt       DateTime          @default(now())
   paymentMode    PaymentMode
   requiredSkills String[]
-  customer       Customer    @relation(fields: [customerId], references: [id])
+  location       String
+  estimatedTime  Int
+  timeUnit       estimatedTimeUnit
+  dailyRate      Int?
+  fixedRate      Int?
+  customerId     String?           @unique
+  customer       Customer?         @relation(fields: [customerId], references: [id])
+  porposal       porposal?
 }
 
 model Session {
@@ -85,9 +89,9 @@ model Contact {
   city           String
   state          String
   country        String
+  secondaryEmail String
   customerId     String?     @unique
   freelancerId   String?     @unique
-  secondaryEmail String
   Customer       Customer?   @relation("customerContact", fields: [customerId], references: [id])
   freelancer     Freelancer? @relation("FreelancerContact", fields: [freelancerId], references: [id])
 }
@@ -121,7 +125,22 @@ model Otp {
   @@index([email, createdAt])
 }
 
+model porposal {
+  id           String     @id @unique
+  postId       String     @unique
+  freelancerId String     @unique
+  Freelancer   Freelancer @relation(fields: [freelancerId], references: [id])
+  Post         Post       @relation(fields: [postId], references: [id])
+}
+
 enum PaymentMode {
   DAILY
   FIXED
+}
+
+enum estimatedTimeUnit {
+  HOUR
+  DAY
+  WEEK
+  MONTH
 }

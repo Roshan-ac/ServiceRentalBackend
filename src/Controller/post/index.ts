@@ -39,6 +39,7 @@ const postSchemma = z.object({
     .refine((val) => !val || val > 0, {
       message: "Daily rate must be a positive number.",
     }),
+  timeUnit: z.enum(["HOUR", "DAY", "WEEK", "MONTH"]),
   fixedRate: z
     .number()
     .optional()
@@ -67,6 +68,7 @@ class PostController {
       caption,
       location,
       estimatedTime,
+      timeUnit,
       dailyRate,
       fixedRate,
       skills,
@@ -87,6 +89,7 @@ class PostController {
         caption,
         location,
         estimatedTime: parseInt(estimatedTime),
+        timeUnit: timeUnit,
         paymentMode: paymentMethod as PaymentMode,
         ...(dailyRate && { dailyRate: dailyRate }),
         ...(fixedRate && { fixedRate: fixedRate }),
