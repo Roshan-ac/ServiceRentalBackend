@@ -4,7 +4,7 @@
 	"description": "service rental backend",
 	"main": "dist/server.js",
 	"scripts": {
-		"start": "node dist/server.js",
+		"start": "pnpm prisma generate && node dist/server.js",
 		"dev": "nodemon src/Server/server.ts",
 		"build": "webpack",
 		"start:dist": "node dist/server.js",

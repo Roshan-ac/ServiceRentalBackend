@@ -1,5 +1,8 @@
 -- CreateEnum
-CREATE TYPE "PaymentMode" AS ENUM ('HOURLY', 'FIXED');
+CREATE TYPE "PaymentMode" AS ENUM ('DAILY', 'FIXED');
+
+-- CreateEnum
+CREATE TYPE "estimatedTimeUnit" AS ENUM ('HOUR', 'DAY', 'WEEK', 'MONTH');
 
 -- CreateTable
 CREATE TABLE "Customer" (
@@ -24,6 +27,7 @@ CREATE TABLE "Freelancer" (
     "availibility" BOOLEAN NOT NULL DEFAULT false,
     "description" TEXT,
     "hourlyRate" DOUBLE PRECISION,
+    "dailyRate" DOUBLE PRECISION,
 
     CONSTRAINT "Freelancer_pkey" PRIMARY KEY ("id")
 );
@@ -33,6 +37,7 @@ CREATE TABLE "Avatar" (
     "id" TEXT NOT NULL,
     "image" TEXT NOT NULL,
     "freelancerId" TEXT,
+    "customerId" TEXT,
 
     CONSTRAINT "Avatar_pkey" PRIMARY KEY ("id")
 );
@@ -40,7 +45,7 @@ CREATE TABLE "Avatar" (
 -- CreateTable
 CREATE TABLE "Post" (
     "id" TEXT NOT NULL,
-    "image" TEXT NOT NULL,
+    "image" TEXT,
     "caption" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "postedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -48,10 +53,21 @@ CREATE TABLE "Post" (
     "requiredSkills" TEXT[],
     "location" TEXT NOT NULL,
     "estimatedTime" INTEGER NOT NULL,
-    "estimatedBudget" DOUBLE PRECISION[],
     "customerId" TEXT,
+    "dailyRate" INTEGER,
+    "fixedRate" INTEGER,
+    "timeUnit" "estimatedTimeUnit" NOT NULL,
 
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "porposal" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "freelancerId" TEXT NOT NULL,
+
+    CONSTRAINT "porposal_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -103,6 +119,18 @@ CREATE TABLE "SkillSet" (
     CONSTRAINT "SkillSet_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Otp" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "otp" VARCHAR(6) NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Otp_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Customer_id_key" ON "Customer"("id");
 
@@ -128,10 +156,16 @@ CREATE UNIQUE INDEX "Avatar_id_key" ON "Avatar"("id");
 CREATE UNIQUE INDEX "Avatar_freelancerId_key" ON "Avatar"("freelancerId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Avatar_customerId_key" ON "Avatar"("customerId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Post_id_key" ON "Post"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Post_customerId_key" ON "Post"("customerId");
+CREATE UNIQUE INDEX "porposal_id_key" ON "porposal"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "porposal_postId_key" ON "porposal"("postId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_id_key" ON "Session"("id");
@@ -163,11 +197,26 @@ CREATE UNIQUE INDEX "SkillSet_id_key" ON "SkillSet"("id");
 -- CreateIndex
 CREATE UNIQUE INDEX "SkillSet_freelancerId_key" ON "SkillSet"("freelancerId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Otp_sessionId_key" ON "Otp"("sessionId");
+
+-- CreateIndex
+CREATE INDEX "Otp_email_createdAt_idx" ON "Otp"("email", "createdAt");
+
+-- AddForeignKey
+ALTER TABLE "Avatar" ADD CONSTRAINT "Avatar_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE "Avatar" ADD CONSTRAINT "Avatar_freelancerId_fkey" FOREIGN KEY ("freelancerId") REFERENCES "Freelancer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "porposal" ADD CONSTRAINT "porposal_freelancerId_fkey" FOREIGN KEY ("freelancerId") REFERENCES "Freelancer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "porposal" ADD CONSTRAINT "porposal_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Session" ADD CONSTRAINT "Session_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
