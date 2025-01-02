@@ -48,8 +48,8 @@ const VerifyOtpSchema = z.object({
 // Improved OTP generation function with guaranteed 6 digits
 const generateOTP = (): string => {
   // Generate a random number between 100000 and 999999 (inclusive)
-  const min = 100000;
-  const max = 999999;
+  const min = 1000;
+  const max = 9999;
   const otp = Math.floor(Math.random() * (max - min + 1)) + min;
   return otp.toString();
 };
