@@ -40,14 +40,13 @@ const VerifyOtpSchema = z.object({
   email: z.string().email("Invalid email format"),
   otp: z
     .string()
-    .length(6, "OTP must be exactly 6 digits")
+    .length(4, "OTP must be exactly 6 digits")
     .regex(/^\d{6}$/, "OTP must contain only digits"),
   sessionId: z.string().min(1, "Session ID is required"),
 });
 
-// Improved OTP generation function with guaranteed 6 digits
+
 const generateOTP = (): string => {
-  // Generate a random number between 100000 and 999999 (inclusive)
   const min = 1000;
   const max = 9999;
   const otp = Math.floor(Math.random() * (max - min + 1)) + min;
