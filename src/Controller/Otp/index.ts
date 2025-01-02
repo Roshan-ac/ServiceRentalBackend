@@ -41,7 +41,7 @@ const VerifyOtpSchema = z.object({
   otp: z
     .string()
     .length(4, "OTP must be exactly 6 digits")
-    .regex(/^\d{6}$/, "OTP must contain only digits"),
+    .regex(/^\d{4}$/, "OTP must contain only digits"),
   sessionId: z.string().min(1, "Session ID is required"),
 });
 
