@@ -144,6 +144,14 @@ export async function EmailVerification(
       to: email,
       subject: "Otp Verification Code",
       text: `${verificationCode} is your Rental Service Otp Verification Code.`,
+      headers: {
+        "X-Entity-Ref-ID": Date.now().toString(), 
+      },
+      references: [],
+      inReplyTo: "", 
+      messageId: `${Date.now()}.${Math.random()
+        .toString()
+        .slice(2)}@najeekai.com`,
       html: htmlTemplate,
       
     });
